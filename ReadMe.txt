@@ -3,3 +3,4 @@ Username - your reddit username
 Password - your reddit password
 Client ID/Client Secret - can be found on the developers page when you register your app with python developers
 
+If you're having trouble with getting praw working properly, you can download it directly from here https://github.com/praw-dev/praw
