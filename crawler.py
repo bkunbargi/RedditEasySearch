@@ -3,10 +3,10 @@ import config
 import sys
 import time
 
-file = open('/Users/Kunbargi/Desktop/reddit bot/allsubreddits.txt','r')
+#file = open('/Users/Kunbargi/Desktop/reddit bot/allsubreddits.txt','r')
 
 def login():
-    #Returns a reddit thing
+    '''Returns logged in reddit instance''' 
     print("Logging in...")
     r = praw.Reddit(username = config.username,
             password = config.password,
@@ -34,6 +34,7 @@ subred = input("Enter a valid Subreddit: ")
 spec_com = input("What Keywords are you looking for: ")
 
 '''to preform a deeper search '''
+
 #sub_list = []
 #for element in file:
 #    for subr in element.split('/'):
@@ -55,5 +56,4 @@ spec_com = input("What Keywords are you looking for: ")
 
 
 '''run the bot'''
-print('Running the bot')
 run_bot(r,subred,spec_com)
