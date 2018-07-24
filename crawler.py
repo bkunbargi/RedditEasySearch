@@ -1,3 +1,4 @@
+from praw.models import comment_forest
 import praw
 import config
 import sys
@@ -6,7 +7,7 @@ import time
 #file = open('/Users/Kunbargi/Desktop/reddit bot/allsubreddits.txt','r')
 
 def login():
-    '''Returns logged in reddit instance''' 
+    '''Returns logged in reddit instance'''
     print("Logging in...")
     r = praw.Reddit(username = config.username,
             password = config.password,
@@ -16,44 +17,79 @@ def login():
     print("You are in!")
     return r
 
-r = login()
-
-def run_bot(r,subred,spec_com):
-    print("Retrieving Results")
-    for submission in r.subreddit(subred).search(spec_com,time_filter = 'day'):
-            print(submission.title)
-            print(submission.permalink)
-            submission.comments.replace_more(limit = None)
-            for top_level_comment in submission.comments.list():
-                if spec_com in top_level_comment.body.split():
-                     print("Thread: " + submission.title)
-                     print(top_level_comment.body)
 
 
-subred = input("Enter a valid Subreddit: ")
-spec_com = input("What Keywords are you looking for: ")
-
-'''to preform a deeper search '''
-
-#sub_list = []
-#for element in file:
-#    for subr in element.split('/'):
-#        if subred in subr:
-#            sub_list.append(subr)
-#print(sub_list)
-
-
-#other_subs = r.subreddits.search(subred)
-#for name in other_subs:
-#    print(name)
-
-#print()
-#print()
-#sub_names = r.subreddits.search_by_name(subred)
-#for name in sub_names:
-#    print(name)
+def get_subs(query):
+    set_list = set()
+    for sub in r.subreddits.search_by_name(query):
+        if str(query) not in sub.title.lower():
+            continue
+        set_list.add(sub)
+    for sub in r.subreddits.search(query):
+        if str(query) not in sub.title.lower():
+            continue
+        set_list.add(sub)
+    return set_list
 
 
+def scrape_threads(sub_list,keyword):
+    organized_sub = []
+    for subs in sub_list:
+        print(subs)
+        sublist_posts = r.subreddit('{}'.format(subs)).hot(limit = 25)
+        sub_dict = dict()
+        for submission in sublist_posts:
+            if keyword in submission.title:
+                print(submission.title)
+                time.sleep(1)
+                sub_dict[submission.title] = submission.id
+            else:
+                continue
+        organized_sub.append(sub_dict)
+        #organized_sub.append({submission.title:submission for submission in sublist_posts})
+        time.sleep(1)
+    print(organized_sub)
+    print()
+    return organized_sub
 
-'''run the bot'''
-run_bot(r,subred,spec_com)
+
+def DFT(parent_comment):
+    comment_list = []
+    children = [i for i in parent_comment]
+    visited_dic = {i:False for i in children}
+    if False not in visited_dic.values():
+        return comment_list
+    else:
+        for k,v in visited_dic.items():
+            if v == False:
+                curr_child = k
+                visited_dic[k] = True
+                comment_list.append(curr_child.body)
+            if curr_child.replies:
+                comment_list.append(DFT(curr_child.replies))
+
+    return comment_list
+
+
+def submission_scrape(sub_id):
+    submission = r.submission(id = sub_id)
+    forest = comment_forest.CommentForest(submission,submission.comments)
+    comment_list = DFT(forest)
+    print(comment_list)
+    return comment_list
+
+
+
+if __name__ == '''__main__''':
+    r = login()
+    sub_topic = input('What kind of subreddits are you looking for (one word): ')
+    subs = get_subs(sub_topic)
+    keyword = input('Keyword for threads: ')
+    submission_dict_list = scrape_threads(subs,keyword)
+
+    for dict in submission_dict_list:
+        for k,v in dict.items():
+            if keyword in k:
+                print(k)
+                submission_scrape(dict[k])
+                print()
